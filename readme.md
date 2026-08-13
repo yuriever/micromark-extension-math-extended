@@ -9,13 +9,13 @@
 
 [micromark][] extensions to support math with dollar delimiters (`$C_L$`),
 TeX-style inline delimiters (`\(C_L\)`), and TeX-style display delimiters
-(`\[C_L\]`).
+(`\[C_L\]` and `\begin{equation}...\end{equation}`).
 
 ## Notice
 
 This package is an **extended version** of the MIT-licensed
 `micromark-extension-math`.
-It adds LaTeX-style bracket notation support based on:
+It adds LaTeX-style backslash delimiter and environment support based on:
 
 * Functional specification derived from behavioral observation
 * Standard LaTeX mathematical notation practices
@@ -54,7 +54,8 @@ in markdown to [`micromark`][micromark].
 As there is no spec for math in Markdown, dollar-delimited math follows how
 code (fenced and text) works in CommonMark.
 Backslash-delimited math follows TeX’s paired `\( ... \)` and `\[ ... \]`
-semantics.
+semantics and LaTeX’s paired `\begin{name} ... \end{name}` environment
+syntax.
 
 ## When to use this
 
@@ -195,6 +196,12 @@ Configuration (TypeScript type).
 
 ###### Fields
 
+* `processEnvironments` (`boolean`, default: `true`)
+  — whether to support standalone `\begin{name} ... \end{name}` environments
+  as display math.
+  Environment names are not restricted, opening and closing names must match,
+  and environments can be nested.
+  Set this option to `false` to preserve their normal Markdown interpretation.
 * `backslashDelimiters` (`boolean`, default: `true`)
   — whether to support TeX-style `\( ... \)` inline math and `\[ ... \]`
   display math.
@@ -252,6 +259,23 @@ A matching `\]` is required.
 Without one, the opening `\[` is treated as normal Markdown instead of
 consuming the remainder of the document.
 
+Use matching LaTeX environments for display math:
+
+```markdown
+\begin{align*}
+a &= b \\
+c &= d
+\end{align*}
+```
+
+The opening command must occur where a flow construct can start.
+The closing command must use the same environment name and be followed only by
+spaces and a line ending or the end of the document.
+Environments can be nested, including custom environments.
+A matching closing command is required; malformed or unclosed environments are
+left as normal Markdown.
+Pass `processEnvironments: false` to disable this syntax.
+
 > 👉 **Compatibility note**: CommonMark normally interprets `\(` and `\[`
 > as character escapes.
 > Pass `backslashDelimiters: false` to preserve that behavior.
@@ -268,6 +292,8 @@ inline) elements, with two classes: `math` and either `math-display` or
 `math-inline`.
 Backslash parentheses produce inline math and backslash brackets produce
 display math.
+LaTeX environments produce display math and preserve the complete opening and
+closing commands for the renderer.
 
 When turning markdown into HTML, each line ending in math (text) is turned
 into a space.
@@ -294,12 +320,19 @@ mathText ::= mathTextDollar / mathTextBackslash
 mathTextDollar ::= sequenceDollarText 1*byte sequenceDollarText
 mathTextBackslash ::= "\\(" *byte "\\)"
 
-mathFlow ::= mathFlowDollar / mathFlowBackslash
+mathFlow ::= mathFlowDollar / mathFlowBackslash / mathFlowEnvironment
 mathFlowDollar ::= fenceDollarOpen *( eol *line ) [ eol fenceDollarClose ]
 mathFlowBackslash ::= "\\[" *byte "\\]" *spaceOrTab ( eol / eof )
 ; Restriction: an unescaped nested "\\[" cannot occur in
 ; `mathFlowBackslash` content.  Paired backslashes remain content, so the
 ; common TeX line-break form "\\\\[2pt]" is allowed.
+mathFlowEnvironment ::= beginEnvironment *byte endEnvironment *spaceOrTab
+                        ( eol / eof )
+beginEnvironment ::= "\\begin" *spaceOrTab "{" environmentName "}"
+endEnvironment ::= "\\end" *spaceOrTab "{" environmentName "}"
+environmentName ::= 1*( byte - "{" - "}" - spaceOrTab - eol )
+; The opening and closing `environmentName` values must match.
+; Nested environments are balanced before the outer environment can close.
 
 fenceDollarOpen ::= sequenceDollarFlow *spaceOrTab [meta]
 fenceDollarClose ::= sequenceDollarFlow *spaceOrTab
@@ -390,6 +423,8 @@ This package works with `micromark` version `3` and later.
 This package extends `micromark-extension-math` with backslash delimiters.
 When `backslashDelimiters` is enabled, it intentionally changes the CommonMark
 meaning of `\(` and `\[`.
+When `processEnvironments` is enabled, standalone matching LaTeX environments
+are interpreted as display math.
 `mdast-util-math` and `remark-math` can consume the resulting math tokens, but
 their Markdown serializer emits dollar delimiters.
 Round trips therefore preserve the math value and display/inline kind, but not

@@ -1,7 +1,7 @@
 {
   "name": "micromark-extension-math-extended",
   "version": "3.2.2",
-  "description": "micromark extension for dollar (`$C_L$`) and TeX-style (`\\(C_L\\)`, `\\[C_L\\]`) math delimiters",
+  "description": "micromark extension for dollar and TeX-style delimited math, including LaTeX environments",
   "license": "MIT",
   "keywords": [
     "micromark",

@@ -5,6 +5,7 @@
 
 import {codes} from 'micromark-util-symbol'
 import {mathFlowDollar, mathFlowBackslash} from './math-flow.js'
+import {mathFlowEnvironment} from './math-flow-environment.js'
 import {mathText} from './math-text.js'
 
 /**
@@ -19,11 +20,16 @@ import {mathText} from './math-text.js'
 export function math(options) {
   const textConstructs = mathText(options)
   const backslash = options?.backslashDelimiters !== false
+  const environments = options?.processEnvironments !== false
+  const backslashFlow = [
+    ...(backslash ? [mathFlowBackslash] : []),
+    ...(environments ? [mathFlowEnvironment] : [])
+  ]
 
   return {
     flow: {
       [codes.dollarSign]: mathFlowDollar,
-      ...(backslash ? {[codes.backslash]: mathFlowBackslash} : {})
+      ...(backslashFlow.length > 0 ? {[codes.backslash]: backslashFlow} : {})
     },
     text: {
       [codes.dollarSign]: textConstructs.dollar,

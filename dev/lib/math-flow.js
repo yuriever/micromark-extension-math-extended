@@ -26,7 +26,7 @@ export const mathFlowBackslash = {
 export const mathFlow = mathFlowDollar
 
 /** @type {Construct} */
-const nonLazyContinuation = {
+export const nonLazyContinuation = {
   tokenize: tokenizeNonLazyContinuation,
   partial: true
 }

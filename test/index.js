@@ -637,6 +637,132 @@ y
   )
 
   await t.test(
+    'should support matching and nested LaTeX environments',
+    async function () {
+      const input = String.raw`\begin{equation}\begin{aligned}
+a
+=
+b
+\end{aligned}
+\end{equation}`
+      const value = String.raw`\begin{equation}\begin{aligned}a
+=
+b
+\end{aligned}
+\end{equation}`
+
+      assert.equal(
+        micromark(input, {
+          extensions: [math()],
+          htmlExtensions: [mathHtml()]
+        }),
+        '<div class="math math-display">' +
+          renderToString(value, {displayMode: true}) +
+          '</div>'
+      )
+    }
+  )
+
+  await t.test(
+    'should scan TeX environment content without premature closing',
+    async function () {
+      const input = String.raw`\begin {equation}
+\beta + \epsilon
+\frac{1}{2}
+
+\begin x + \end x
+\begin{}
+\begin{bad name}
+\\begin{ignored}
+\begin{aligned}
+a=b
+\end{different}
+\end{aligned}
+% \end{equation}
+\end{equation} trailing
+\end {equation}  `
+      const output = micromark(input, {
+        extensions: [math()],
+        htmlExtensions: [mathHtml({throwOnError: false})]
+      })
+
+      assert.match(output, /^<div class="math math-display">/)
+      assert.doesNotMatch(output, /<h1>/)
+    }
+  )
+
+  await t.test(
+    'should leave malformed or unclosed environments as Markdown',
+    async function () {
+      const inputs = [
+        String.raw`\began{equation}`,
+        String.raw`\begin equation`,
+        String.raw`\begin{}`,
+        String.raw`\begin{bad name}`,
+        String.raw`\begin{equation}
+a
+\end{align}`,
+        String.raw`\begin{equation}
+a
+`
+      ]
+
+      for (const input of inputs) {
+        assert.equal(micromark(input, {extensions: [math()]}), micromark(input))
+      }
+    }
+  )
+
+  await t.test(
+    'should support containers and allow environment processing to be disabled',
+    async function () {
+      const input = String.raw`>   \begin{equation}
+>   a
+>   =
+>   b
+>   \end{equation}`
+      const value = String.raw`\begin{equation}a
+=
+b
+\end{equation}`
+      const plain = String.raw`\begin{equation}
+a
+=
+b
+\end{equation}`
+
+      assert.equal(
+        micromark(input, {
+          extensions: [math()],
+          htmlExtensions: [mathHtml()]
+        }),
+        '<blockquote>\n' +
+          '<div class="math math-display">' +
+          renderToString(value, {displayMode: true}) +
+          '</div>\n' +
+          '</blockquote>'
+      )
+      assert.equal(
+        micromark(plain, {
+          extensions: [math({processEnvironments: false})]
+        }),
+        micromark(plain)
+      )
+      assert.equal(
+        micromark(plain, {
+          extensions: [
+            math({
+              backslashDelimiters: false,
+              processEnvironments: false
+            })
+          ]
+        }),
+        micromark(plain)
+      )
+    }
+  )
+
+  await t.test(
     'should not support math (flow) w/ one dollar sign',
     async function () {
       assert.equal(

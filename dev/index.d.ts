@@ -24,6 +24,15 @@ export interface HtmlOptions extends KatexOptions {
  */
 export interface Options {
   /**
+   * Whether to support standalone LaTeX environments as math flow
+   * (default: `true`).
+   *
+   * Environment names are not restricted.  Opening and closing commands must
+   * use the same name, and environments can be nested.
+   */
+  processEnvironments?: boolean | null | undefined
+
+  /**
    * Whether to support TeX-style backslash delimiters (default: `true`).
    *
    * Enabling this option changes the CommonMark meaning of `\(` and `\[`,
