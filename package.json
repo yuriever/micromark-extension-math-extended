@@ -29,8 +29,14 @@
   "sideEffects": false,
   "type": "module",
   "exports": {
-    "development": "./dev/index.js",
-    "default": "./index.js"
+    ".": {
+      "development": "./dev/index.js",
+      "default": "./index.js"
+    },
+    "./dev": {
+      "types": "./dev/index.d.ts",
+      "default": "./dev/index.js"
+    }
   },
   "files": [
     "dev/",
