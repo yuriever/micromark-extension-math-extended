@@ -1,7 +1,13 @@
 import type {KatexOptions} from 'katex'
+import type {Extension, HtmlExtension} from 'micromark-util-types'
 
-export {mathHtml} from './lib/html.js'
-export {math} from './lib/syntax.js'
+/** Create a micromark extension for parsing math. */
+export function math(options?: Options | null | undefined): Extension
+
+/** Create a micromark HTML extension for rendering math. */
+export function mathHtml(
+  options?: HtmlOptions | null | undefined
+): HtmlExtension
 
 /**
  * Configuration for HTML output.
